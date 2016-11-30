@@ -45,6 +45,10 @@ fn main() {
         let c = stdin.next().unwrap();
         match c.unwrap() {
             Key::Ctrl('c') => break,
+            Key::Ctrl('p') => state = up(&state),
+            Key::Ctrl('n') => state = down(&state),
+            Key::Ctrl('f') => state = right(&state),
+            Key::Ctrl('b') => state = left(&state),
             Key::Backspace => state = backspace(&state),
             Key::Char(c) => state = process_keystroke(&state, c),
             _ => {}
@@ -52,6 +56,60 @@ fn main() {
 
         render(&state, &mut stdout);
     }
+}
+
+fn up(state: &State) -> State {
+    let buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+    // move cursor to last position of line if current line > next line
+    if cursor.1 > 1 {
+        cursor.1 -= 1;
+
+        if buffer[(cursor.1 - 1) as usize].len() < buffer[cursor.1 as usize].len() {
+            cursor.0 = buffer[(cursor.1 - 1) as usize].len() as u16;
+        }
+    }
+
+    State::new(buffer, cursor)
+}
+
+fn down(state: &State) -> State {
+    let buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+    if buffer.len() > (cursor.1) as usize {
+        // move curser to last position of line if current line > next line
+        if buffer[(cursor.1 - 1) as usize].len() > buffer[cursor.1 as usize].len() {
+            cursor.0 = buffer[(cursor.1 - 1) as usize].len() as u16;
+        }
+
+        cursor.1 += 1;
+    }
+
+    State::new(buffer, cursor)
+}
+
+fn right(state: &State) -> State {
+    let buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+    if buffer[(cursor.1 - 1) as usize].len() >= cursor.0 as usize {
+        cursor.0 += 1;
+    }
+
+    State::new(buffer, cursor)
+}
+
+fn left(state: &State) -> State {
+    let buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+    if cursor.0 - 1 >= 1 {
+        cursor.0 -= 1;
+    }
+
+    State::new(buffer, cursor)
 }
 
 fn backspace(state: &State) -> State {
