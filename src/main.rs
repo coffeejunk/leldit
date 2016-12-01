@@ -160,11 +160,12 @@ fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutL
         println!("{}\r", line);
     }
 
+    // Debug state
+    // println!("\n\n\n\n{:?}", state);
+
     write!(stdout,
            "{}",
            termion::cursor::Goto(state.cursor.0, state.cursor.1));
 
-    // Debug state
-    // println!("{:?}", state);
     stdout.flush().unwrap();
 }
