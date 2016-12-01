@@ -113,8 +113,23 @@ fn left(state: &State) -> State {
 }
 
 fn backspace(state: &State) -> State {
-    // TODO
-    return state.clone();
+    // TODO: join with previous line if at position 1
+    let mut buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+    if cursor.0 - 1 >= 1 {
+        cursor.0 -= 1;
+
+        let ref mut line = buffer[(cursor.1 - 1) as usize];
+        let pos = (cursor.0 - 1) as usize;
+        if line.len() > pos {
+            line.remove(pos);
+        } else {
+            line.pop();
+        }
+    }
+
+    State::new(buffer, cursor)
 }
 
 fn process_keystroke(state: &State, chr: char) -> State {
