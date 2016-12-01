@@ -62,11 +62,11 @@ fn up(state: &State) -> State {
     let buffer = state.buffer.clone();
     let mut cursor = state.cursor.clone();
 
-    // move cursor to last position of line if current line > next line
     if cursor.1 > 1 {
         cursor.1 -= 1;
 
-        if buffer[(cursor.1 - 1) as usize].len() < buffer[cursor.1 as usize].len() {
+        // move curser to end of next line if current cursor pos > next line
+        if buffer[(cursor.1 - 1) as usize].len() < cursor.0 as usize {
             cursor.0 = buffer[(cursor.1 - 1) as usize].len() as u16;
         }
     }
@@ -79,9 +79,9 @@ fn down(state: &State) -> State {
     let mut cursor = state.cursor.clone();
 
     if buffer.len() > (cursor.1) as usize {
-        // move curser to last position of line if current line > next line
-        if buffer[(cursor.1 - 1) as usize].len() > buffer[cursor.1 as usize].len() {
-            cursor.0 = buffer[(cursor.1 - 1) as usize].len() as u16;
+        // move curser to end of next line if current cursor pos > next line
+        if cursor.0 > buffer[cursor.1 as usize].len() as u16 {
+            cursor.0 = buffer[cursor.1 as usize].len() as u16;
         }
 
         cursor.1 += 1;
