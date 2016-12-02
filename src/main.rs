@@ -119,20 +119,26 @@ fn left(state: &State) -> State {
 }
 
 fn backspace(state: &State) -> State {
-    // TODO: join with previous line if at position 1
     let mut buffer = state.buffer.clone();
     let mut cursor = state.cursor.clone();
 
     if cursor.0 - 1 >= 1 {
         cursor.0 -= 1;
 
-        let ref mut line = buffer[(cursor.1 - 1) as usize];
         let pos = (cursor.0 - 1) as usize;
+        let ref mut line = buffer[(cursor.1 - 1) as usize];
         if line.len() > pos {
             line.remove(pos);
         } else {
             line.pop();
         }
+    } else if cursor.1 > 1 {
+        let newline = buffer[(cursor.1 - 2) as usize].clone() + &buffer[(cursor.1 - 1) as usize];
+        let newpos = buffer[(cursor.1 - 2) as usize].len() as u16;
+        buffer[(cursor.1 - 2) as usize] = newline;
+        buffer.remove((cursor.1 - 1) as usize);
+        cursor.0 = newpos + 1;
+        cursor.1 -= 1;
     }
 
     State::new(buffer, cursor)
