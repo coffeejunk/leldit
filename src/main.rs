@@ -9,11 +9,11 @@ use std::io::{Write, stdout, stdin};
 #[derive(Debug, Clone)]
 struct State {
     buffer: Vec<String>,
-    cursor: (u16, u16),
+    cursor: (usize, usize),
 }
 
 impl State {
-    fn new(buffer: Vec<String>, cursor: (u16, u16)) -> State {
+    fn new(buffer: Vec<String>, cursor: (usize, usize)) -> State {
         State {
             buffer: buffer,
             cursor: cursor,
@@ -31,12 +31,12 @@ impl State {
         if cursor.1 > 1 {
             cursor.1 -= 1;
 
-            let buf_len = buffer[(cursor.1 - 1) as usize].len();
+            let buf_len = buffer[cursor.1 - 1].len();
             // move curser to end of next line if current cursor pos > next line
             if buf_len == 0 {
                 cursor.0 = 1;
-            } else if buf_len < cursor.0 as usize {
-                cursor.0 = buf_len as u16 + 1;
+            } else if buf_len < cursor.0 {
+                cursor.0 = buf_len + 1;
             }
         }
 
@@ -47,13 +47,13 @@ impl State {
         let buffer = self.buffer.clone();
         let mut cursor = self.cursor.clone();
 
-        if buffer.len() > (cursor.1) as usize {
-            let buf_len = buffer[cursor.1 as usize].len();
+        if buffer.len() > cursor.1 {
+            let buf_len = buffer[cursor.1].len();
             // move curser to end of next line if current cursor pos > next line
             if buf_len == 0 {
                 cursor.0 = 1;
-            } else if buf_len < cursor.0 as usize {
-                cursor.0 = buffer[cursor.1 as usize].len() as u16 + 1;
+            } else if buf_len < cursor.0 {
+                cursor.0 = buffer[cursor.1].len() + 1;
             }
 
             cursor.1 += 1;
@@ -66,7 +66,7 @@ impl State {
         let buffer = self.buffer.clone();
         let mut cursor = self.cursor.clone();
 
-        if buffer[(cursor.1 - 1) as usize].len() >= cursor.0 as usize {
+        if buffer[cursor.1 - 1].len() >= cursor.0 {
             cursor.0 += 1;
         }
 
@@ -91,19 +91,18 @@ impl State {
         if cursor.0 - 1 >= 1 {
             cursor.0 -= 1;
 
-            let pos = (cursor.0 - 1) as usize;
-            let ref mut line = buffer[(cursor.1 - 1) as usize];
+            let pos = cursor.0 - 1;
+            let ref mut line = buffer[cursor.1 - 1];
             if line.len() > pos {
                 line.remove(pos);
             } else {
                 line.pop();
             }
         } else if cursor.1 > 1 {
-            let newline = buffer[(cursor.1 - 2) as usize].clone() +
-                          &buffer[(cursor.1 - 1) as usize];
-            let newpos = buffer[(cursor.1 - 2) as usize].len() as u16;
-            buffer[(cursor.1 - 2) as usize] = newline;
-            buffer.remove((cursor.1 - 1) as usize);
+            let newline = buffer[cursor.1 - 2].clone() + &buffer[cursor.1 - 1];
+            let newpos = buffer[cursor.1 - 2].len();
+            buffer[cursor.1 - 2] = newline;
+            buffer.remove(cursor.1 - 1);
             cursor.0 = newpos + 1;
             cursor.1 -= 1;
         }
@@ -116,17 +115,17 @@ impl State {
         let mut cursor = self.cursor.clone();
 
 
-        let buf_len = buffer[(cursor.1 - 1) as usize].len();
-        if buf_len < cursor.0 as usize {
-            buffer.insert(cursor.1 as usize, String::new());
+        let buf_len = buffer[cursor.1 - 1].len();
+        if buf_len < cursor.0 {
+            buffer.insert(cursor.1, String::new());
         } else {
-            let old_line = buffer[(cursor.1 - 1) as usize].clone();
-            let (first, second) = old_line.split_at((cursor.0 - 1) as usize);
+            let old_line = buffer[cursor.1 - 1].clone();
+            let (first, second) = old_line.split_at(cursor.0 - 1);
             let first = first.to_string();
             let second = second.to_string();
-            buffer.remove((cursor.1 - 1) as usize);
-            buffer.insert((cursor.1 - 1) as usize, first);
-            buffer.insert(cursor.1 as usize, second);
+            buffer.remove(cursor.1 - 1);
+            buffer.insert(cursor.1 - 1, first);
+            buffer.insert(cursor.1, second);
         }
 
         cursor.0 = 1;
@@ -140,9 +139,9 @@ impl State {
         let mut cursor = self.cursor.clone();
 
         {
-            let ref mut line = buffer[(cursor.1 as usize) - 1];
-            if cursor.0 as usize <= line.len() {
-                line.insert((cursor.0 - 1) as usize, chr);
+            let ref mut line = buffer[cursor.1 - 1];
+            if cursor.0 <= line.len() {
+                line.insert(cursor.0 - 1, chr);
             } else {
                 line.push(chr);
             }
@@ -164,7 +163,7 @@ fn main() {
            "{}{}{}",
            termion::clear::All,
            termion::cursor::Show,
-           termion::cursor::Goto(1, 1))
+           termion::cursor::Goto(1 as u16, 1 as u16))
         .unwrap();
     stdout.flush().unwrap();
 
@@ -205,7 +204,7 @@ fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutL
     write!(stdout,
            "{}{}",
            termion::clear::All,
-           termion::cursor::Goto(1, 1))
+           termion::cursor::Goto(1 as u16, 1 as u16))
         .unwrap();
 
 
@@ -218,7 +217,7 @@ fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutL
 
     write!(stdout,
            "{}",
-           termion::cursor::Goto(state.cursor.0, state.cursor.1));
+           termion::cursor::Goto(state.cursor.0 as u16, state.cursor.1 as u16));
 
     stdout.flush().unwrap();
 }
