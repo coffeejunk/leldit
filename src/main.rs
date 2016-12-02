@@ -134,6 +134,24 @@ impl State {
 
         return State::new(buffer, cursor);
     }
+
+    fn insert(&self, chr: char) -> State {
+        let mut buffer = self.buffer.clone();
+        let mut cursor = self.cursor.clone();
+
+        {
+            let ref mut line = buffer[(cursor.1 as usize) - 1];
+            if cursor.0 as usize <= line.len() {
+                line.insert((cursor.0 - 1) as usize, chr);
+            } else {
+                line.push(chr);
+            }
+        }
+
+        cursor.0 += 1;
+
+        State::new(buffer, cursor)
+    }
 }
 
 fn main() {
@@ -170,23 +188,11 @@ fn main() {
 }
 
 fn process_keystroke(state: &State, chr: char) -> State {
-    let mut buffer = state.buffer.clone();
-    let mut cursor = state.cursor.clone();
-
     if chr == '\r' || chr == '\n' {
         return state.newline();
     } else {
-        let ref mut line = buffer[(cursor.1 as usize) - 1];
-
-        if cursor.0 <= line.len() as u16 {
-            line.insert((cursor.0 - 1) as usize, chr);
-        } else {
-            line.push(chr);
-        }
-        cursor.0 += 1;
-
+        return state.insert(chr);
     }
-    return State::new(buffer, cursor);
 }
 
 fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutLock>) {
