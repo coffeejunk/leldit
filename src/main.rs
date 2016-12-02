@@ -172,27 +172,33 @@ fn main() {
 
     loop {
         let c = stdin.next().unwrap();
-        match c.unwrap() {
-            Key::Ctrl('c') => break,
-            Key::Ctrl('p') => state = state.up(),
-            Key::Ctrl('n') => state = state.down(),
-            Key::Ctrl('f') => state = state.right(),
-            Key::Ctrl('b') => state = state.left(),
-            Key::Backspace => state = state.backspace(),
-            Key::Char(c) => state = process_keystroke(&state, c),
-            _ => {}
+        match process_keystroke(&state, c.unwrap()) {
+            None => break,
+            Some(x) => state = x,
         }
 
         render(&state, &mut stdout);
     }
 }
 
-fn process_keystroke(state: &State, chr: char) -> State {
-    if chr == '\r' || chr == '\n' {
-        return state.newline();
-    } else {
-        return state.insert(chr);
+fn process_keystroke(state: &State, chr: Key) -> Option<State> {
+    match chr {
+        Key::Ctrl('c') => None,
+        Key::Ctrl('p') => Some(state.up()),
+        Key::Ctrl('n') => Some(state.down()),
+        Key::Ctrl('f') => Some(state.right()),
+        Key::Ctrl('b') => Some(state.left()),
+        Key::Backspace => Some(state.backspace()),
+        Key::Char(chr) => {
+            if chr == '\r' || chr == '\n' {
+                Some(state.newline())
+            } else {
+                Some(state.insert(chr))
+            }
+        }
+        _ => Some(state.clone()),
     }
+
 }
 
 fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutLock>) {
