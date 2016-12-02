@@ -147,7 +147,12 @@ fn process_keystroke(state: &State, chr: char) -> State {
         cursor.0 = 1;
         cursor.1 += 1;
     } else {
-        buffer[(cursor.1 as usize) - 1].push(chr);
+        let ref mut line = buffer[(cursor.1 as usize) - 1];
+        if cursor.0 <= line.len() as u16 {
+            line.insert((cursor.0 - 1) as usize, chr);
+        } else {
+            line.push(chr);
+        }
         cursor.0 += 1;
     }
 
