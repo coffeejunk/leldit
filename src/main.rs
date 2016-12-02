@@ -144,25 +144,48 @@ fn backspace(state: &State) -> State {
     State::new(buffer, cursor)
 }
 
+fn newline(state: &State) -> State {
+    let mut buffer = state.buffer.clone();
+    let mut cursor = state.cursor.clone();
+
+
+    let buf_len = buffer[(cursor.1 - 1) as usize].len();
+    if buf_len < cursor.0 as usize {
+        buffer.insert(cursor.1 as usize, String::new());
+    } else {
+        let old_line = buffer[(cursor.1 - 1) as usize].clone();
+        let (first, second) = old_line.split_at((cursor.0 - 1) as usize);
+        let first = first.to_string();
+        let second = second.to_string();
+        buffer.remove((cursor.1 - 1) as usize);
+        buffer.insert((cursor.1 - 1) as usize, first);
+        buffer.insert(cursor.1 as usize, second);
+    }
+
+    cursor.0 = 1;
+    cursor.1 += 1;
+
+    return State::new(buffer, cursor);
+}
+
 fn process_keystroke(state: &State, chr: char) -> State {
     let mut buffer = state.buffer.clone();
     let mut cursor = state.cursor.clone();
 
     if chr == '\r' || chr == '\n' {
-        buffer.push(String::new());
-        cursor.0 = 1;
-        cursor.1 += 1;
+        return newline(&state);
     } else {
         let ref mut line = buffer[(cursor.1 as usize) - 1];
+
         if cursor.0 <= line.len() as u16 {
             line.insert((cursor.0 - 1) as usize, chr);
         } else {
             line.push(chr);
         }
         cursor.0 += 1;
-    }
 
-    State::new(buffer, cursor)
+    }
+    return State::new(buffer, cursor);
 }
 
 fn render(state: &State, stdout: &mut termion::raw::RawTerminal<std::io::StdoutLock>) {
