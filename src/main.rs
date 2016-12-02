@@ -83,56 +83,57 @@ impl State {
 
         State::new(buffer, cursor)
     }
-}
 
-fn backspace(state: &State) -> State {
-    let mut buffer = state.buffer.clone();
-    let mut cursor = state.cursor.clone();
+    fn backspace(&self) -> State {
+        let mut buffer = self.buffer.clone();
+        let mut cursor = self.cursor.clone();
 
-    if cursor.0 - 1 >= 1 {
-        cursor.0 -= 1;
+        if cursor.0 - 1 >= 1 {
+            cursor.0 -= 1;
 
-        let pos = (cursor.0 - 1) as usize;
-        let ref mut line = buffer[(cursor.1 - 1) as usize];
-        if line.len() > pos {
-            line.remove(pos);
-        } else {
-            line.pop();
+            let pos = (cursor.0 - 1) as usize;
+            let ref mut line = buffer[(cursor.1 - 1) as usize];
+            if line.len() > pos {
+                line.remove(pos);
+            } else {
+                line.pop();
+            }
+        } else if cursor.1 > 1 {
+            let newline = buffer[(cursor.1 - 2) as usize].clone() +
+                          &buffer[(cursor.1 - 1) as usize];
+            let newpos = buffer[(cursor.1 - 2) as usize].len() as u16;
+            buffer[(cursor.1 - 2) as usize] = newline;
+            buffer.remove((cursor.1 - 1) as usize);
+            cursor.0 = newpos + 1;
+            cursor.1 -= 1;
         }
-    } else if cursor.1 > 1 {
-        let newline = buffer[(cursor.1 - 2) as usize].clone() + &buffer[(cursor.1 - 1) as usize];
-        let newpos = buffer[(cursor.1 - 2) as usize].len() as u16;
-        buffer[(cursor.1 - 2) as usize] = newline;
-        buffer.remove((cursor.1 - 1) as usize);
-        cursor.0 = newpos + 1;
-        cursor.1 -= 1;
+
+        State::new(buffer, cursor)
     }
 
-    State::new(buffer, cursor)
-}
-
-fn newline(state: &State) -> State {
-    let mut buffer = state.buffer.clone();
-    let mut cursor = state.cursor.clone();
+    fn newline(&self) -> State {
+        let mut buffer = self.buffer.clone();
+        let mut cursor = self.cursor.clone();
 
 
-    let buf_len = buffer[(cursor.1 - 1) as usize].len();
-    if buf_len < cursor.0 as usize {
-        buffer.insert(cursor.1 as usize, String::new());
-    } else {
-        let old_line = buffer[(cursor.1 - 1) as usize].clone();
-        let (first, second) = old_line.split_at((cursor.0 - 1) as usize);
-        let first = first.to_string();
-        let second = second.to_string();
-        buffer.remove((cursor.1 - 1) as usize);
-        buffer.insert((cursor.1 - 1) as usize, first);
-        buffer.insert(cursor.1 as usize, second);
+        let buf_len = buffer[(cursor.1 - 1) as usize].len();
+        if buf_len < cursor.0 as usize {
+            buffer.insert(cursor.1 as usize, String::new());
+        } else {
+            let old_line = buffer[(cursor.1 - 1) as usize].clone();
+            let (first, second) = old_line.split_at((cursor.0 - 1) as usize);
+            let first = first.to_string();
+            let second = second.to_string();
+            buffer.remove((cursor.1 - 1) as usize);
+            buffer.insert((cursor.1 - 1) as usize, first);
+            buffer.insert(cursor.1 as usize, second);
+        }
+
+        cursor.0 = 1;
+        cursor.1 += 1;
+
+        return State::new(buffer, cursor);
     }
-
-    cursor.0 = 1;
-    cursor.1 += 1;
-
-    return State::new(buffer, cursor);
 }
 
 fn main() {
@@ -159,7 +160,7 @@ fn main() {
             Key::Ctrl('n') => state = state.down(),
             Key::Ctrl('f') => state = state.right(),
             Key::Ctrl('b') => state = state.left(),
-            Key::Backspace => state = backspace(&state),
+            Key::Backspace => state = state.backspace(),
             Key::Char(c) => state = process_keystroke(&state, c),
             _ => {}
         }
@@ -173,7 +174,7 @@ fn process_keystroke(state: &State, chr: char) -> State {
     let mut cursor = state.cursor.clone();
 
     if chr == '\r' || chr == '\n' {
-        return newline(&state);
+        return state.newline();
     } else {
         let ref mut line = buffer[(cursor.1 as usize) - 1];
 
